@@ -1,6 +1,8 @@
 package persistence;
 
+import dto.TeamParticipantsDTO;
 import entities.Member;
+import exceptions.DatabaseException;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -13,6 +15,30 @@ public class MemberMapper {
         public MemberMapper(Database database) {
             this.database = database;
         }
+
+    public List<TeamParticipantsDTO> getParticipantsPrTeam() {
+
+        List<TeamParticipantsDTO> teamParticipantsDTOList = new ArrayList<>();
+
+        String sql = "SELECT team_id, COUNT(member_id) AS number_of_participants FROM registration GROUP BY team_id";
+
+        try (Connection connection = database.connect()) {
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    String team_id = rs.getString("team_id");
+                    int numberOfParticipants = rs.getInt("number_of_participants");
+                    teamParticipantsDTOList.add(new TeamParticipantsDTO(team_id,numberOfParticipants));
+                }
+            } catch (SQLException throwables) {
+                // TODO: Make own throwable exception and let it bubble upwards
+                throwables.printStackTrace();
+            }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return teamParticipantsDTOList;
+    }
 
         public List<Member> getAllMembers() {
 
@@ -98,7 +124,7 @@ public class MemberMapper {
             return result;
         }
 
-        public Member insertMember(Member member){
+        public Member insertMember(Member member) throws DatabaseException {
             boolean result = false;
             int newId = 0;
             String sql = "insert into member (name, address, zip, gender, year) values (?,?,?,?,?)";
@@ -126,7 +152,8 @@ public class MemberMapper {
                 }
             } catch (SQLException throwables) {
                 // TODO: Make own throwable exception and let it bubble upwards
-                throwables.printStackTrace();
+                throw new DatabaseException("Insert of member " + member.getMemberId() + " false");
+                //throwables.printStackTrace();
             }
             return member;
         }

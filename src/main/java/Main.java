@@ -1,4 +1,6 @@
+import dto.TeamParticipantsDTO;
 import entities.Member;
+import exceptions.DatabaseException;
 import persistence.Database;
 import persistence.MemberMapper;
 
@@ -6,9 +8,9 @@ import java.util.List;
 
 public class Main {
 
-    private final static String USER = "dev";
-    private final static String PASSWORD = "ax2";
-    private final static String URL = "jdbc:mysql://localhost:3306/sportsclub?serverTimezone=CET&useSSL=false&allowPublicKeyRetrieval=true";
+    private final static String USER = "postgres";
+    private final static String PASSWORD = "postgres";
+    private final static String URL = "jdbc:postgresql://localhost:5432/sportsclub?serverTimezone=CET&useSSL=false&allowPublicKeyRetrieval=true";
 
     public static void main(String[] args) {
 
@@ -16,8 +18,12 @@ public class Main {
         MemberMapper memberMapper = new MemberMapper(db);
         List<Member> members = memberMapper.getAllMembers();
 
-        showMembers(members);
-        showMemberById(memberMapper, 13);
+        //showMembers(members);
+        //showMemberById(memberMapper, 13);
+        List<TeamParticipantsDTO> list = memberMapper.getParticipantsPrTeam();
+        for(TeamParticipantsDTO tdto : list) {
+            System.out.println(tdto);
+        }
 
         /*  
             int newMemberId = insertMember(memberMapper);
@@ -35,7 +41,12 @@ public class Main {
 
     private static int insertMember(MemberMapper memberMapper) {
         Member m1 = new Member("Ole Olsen", "Banegade 2", 3700, "Rønne", "m", 1967);
-        Member m2 = memberMapper.insertMember(m1);
+        Member m2 = null;
+        try {
+            m2 = memberMapper.insertMember(m1);
+        } catch (DatabaseException e) {
+            //skriv til bruger at medlem ikke bliver tilføjet
+        }
         showMemberById(memberMapper, m2.getMemberId());
         return m2.getMemberId();
     }
